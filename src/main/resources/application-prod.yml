@@ -1,0 +1,124 @@
+spring:
+  application:
+    name: map-tms
+  servlet:
+    multipart:
+      max-file-size: 5000MB
+      max-request-size: 5000MB
+  datasource:
+    type: com.alibaba.druid.pool.DruidDataSource
+    driver-class-name: dm.jdbc.driver.DmDriver
+    # 连接容器内的达梦数据库
+    url: jdbc:dm://terraforge-database:5236?schema=map
+    username: SYSDBA
+    password: SYSDBA001
+    # 连接池配置 - 高性能优化
+    druid:
+      initial-size: 10
+      min-idle: 10
+      max-active: 50
+      max-wait: 60000
+      time-between-eviction-runs-millis: 60000
+      min-evictable-idle-time-millis: 300000
+      validation-query: SELECT 1 FROM DUAL
+      test-while-idle: true
+      test-on-borrow: false
+      test-on-return: false
+      pool-prepared-statements: true
+      max-pool-prepared-statement-per-connection-size: 50
+      # 性能优化配置
+      use-global-data-source-stat: true
+      filters: stat,wall,log4j2
+      # 监控配置
+      web-stat-filter:
+        enabled: true
+        url-pattern: /*
+        exclusions: "*.js,*.gif,*.jpg,*.png,*.css,*.ico,/druid/*"
+      stat-view-servlet:
+        enabled: true
+        url-pattern: /druid/*
+        reset-enable: false
+        login-username: admin
+        login-password: terraforge2024
+      # 连接泄漏检测
+      remove-abandoned: true
+      remove-abandoned-timeout: 1800
+      log-abandoned: true
+
+server:
+  port: 8082
+
+#Mybatis-plus配置
+mybatis-plus:
+  basePackage: com.mapper
+  mapper-locations: classpath*:/mappings/**/*Mapper.xml
+  typeAliasesPackage: com.terraforge.po
+  global-config:
+    banner: false
+    id-type: 4
+    #字段策略 0:"忽略判断"- 1:"非 NULL 判断")- 2:"非空判断"
+    field-strategy: 1
+    #驼峰下划线转换
+    db-column-underline: true
+    logic-delete-value: -1
+    logic-not-delete-value: 0
+  configuration:
+    map-underscore-to-camel-case: true
+    cache-enabled: true
+    log-impl:  org.apache.ibatis.logging.stdout.StdOutImpl
+
+# 基础路径
+TILES_BASE_DIR: "/app/tiles"
+# 图片类型
+IMAGE_TYPE: ".png"
+# 数据源目录
+DATA_SOURCE_DIR: "/app/datasource"
+
+terraforge:
+  api:
+    # 系统状态相关 API
+    health-url: http://localhost:8000/api/health
+    system-info-url: http://localhost:8000/api/system/info
+
+    # 数据源管理相关 API
+    datasources-url: http://localhost:8000/api/dataSources
+    datasources-info-url: http://localhost:8000/api/dataSources/info
+
+    # 结果浏览相关 API
+    results-url: http://localhost:8000/api/results
+
+    # 切片服务相关 API
+    terrain-tile-url: http://localhost:8000/api/tile/terrain
+
+    # 任务管理相关 API
+    tasks-url: http://localhost:8000/api/tasks
+    task-stop-url: http://localhost:8000/api/tasks/{taskId}/stop
+    task-delete-url: http://localhost:8000/api/tasks/{taskId}
+    task-cleanup-url: http://localhost:8000/api/tasks/cleanup
+
+    # 辅助工具相关 API
+    terrain-layer-url: http://localhost:8000/api/terrain/layer
+    terrain-decompress-url: http://localhost:8000/api/terrain/decompress
+
+    # 工作空间管理相关 API
+    workspace-create-folder-url: http://localhost:8000/api/workspace/create-folder
+    workspace-folder-url: http://localhost:8000/api/workspace/folder
+    workspace-file-url: http://localhost:8000/api/workspace/file
+    workspace-move-url: http://localhost:8000/api/workspace/move
+    workspace-info-url: http://localhost:8000/api/workspace/info
+
+    # 索引瓦片切片相关 API
+    indexed-tiles-url: http://localhost:8000/api/tile/indexedTiles
+
+    # 透明瓦片处理相关 API
+    tiles-nodata-scan-url: http://localhost:8000/api/tiles/nodata/scan
+    tiles-nodata-delete-url: http://localhost:8000/api/tiles/nodata/delete
+
+    # 瓦片格式转换相关 API
+    tile-convert-url: http://localhost:8000/api/tile/convert
+
+    # 分析工具相关 API
+
+    config-recommend-url: http://localhost:8000/api/config/recommend
+    routes-url: http://localhost:8000/api/routes
+    container-update-url: http://localhost:8000/api/container/update

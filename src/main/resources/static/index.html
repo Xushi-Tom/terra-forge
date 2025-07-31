@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TerraForge 管理系统</title>
+    <link rel="stylesheet" href="css/style.css">
+    <!-- 使用本地图标字体或Unicode符号 -->
+</head>
+<body>
+    <!-- 头部导航栏 -->
+    <header class="header">
+        <div class="header-left">
+            <div class="logo">
+                <span>TerraForge 管理系统</span>
+            </div>
+        </div>
+        <div class="header-right">
+            <div class="datetime-info" id="datetimeInfo">
+                <span id="currentDate"></span>
+                <span id="currentTime"></span>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主要内容区域 -->
+    <div class="main-container">
+        <!-- 左侧菜单 -->
+        <aside class="sidebar">
+            <nav class="nav-menu">
+                <ul>
+                    <li class="nav-item active" data-section="dashboard">
+                        <span>仪表盘</span>
+                    </li>
+                    <li class="nav-item" data-section="datasource">
+                        <span>数据源管理</span>
+                    </li>
+                    <li class="nav-item" data-section="map-tiles">
+                        <span>地图切片</span>
+                    </li>
+                    <li class="nav-item" data-section="terrain-tiles">
+                        <span>地形切片</span>
+                    </li>
+                    <li class="nav-item" data-section="workspace">
+                        <span>工作空间</span>
+                    </li>
+                    <li class="nav-item" data-section="tasks">
+                        <span>任务管理</span>
+                    </li>
+                    <li class="nav-item" data-section="tools">
+                        <span>分析工具</span>
+                    </li>
+                    <li class="nav-item" data-section="system">
+                        <span>系统管理</span>
+                    </li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- 右侧内容区域 -->
+        <main class="content">
+            <!-- 仪表盘 -->
+            <section id="dashboard" class="content-section active">
+                <div class="section-header">
+                    <h2>系统仪表盘</h2>
+                    <div class="dashboard-controls">
+                        <label class="switch-label">
+                            <input type="checkbox" id="autoRefreshToggle" onchange="toggleAutoRefresh()">
+                            <span class="switch-slider"></span>
+                            <span>自动刷新</span>
+                        </label>
+                        <select id="refreshInterval" class="refresh-interval-select" onchange="updateRefreshInterval()">
+                            <option value="5">5秒</option>
+                            <option value="10">10秒</option>
+                            <option value="30" selected>30秒</option>
+                            <option value="60">1分钟</option>
+                            <option value="300">5分钟</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="dashboard-container">
+                    <h2>任务概览</h2>
+                    <div class="overview-cards">
+                        <div class="overview-card">
+                            <span class="card-value">0</span>
+                            <span class="card-label">总任务数</span>
+                        </div>
+                        <div class="overview-card">
+                            <span class="card-value">0</span>
+                            <span class="card-label">已完成</span>
+                        </div>
+                        <div class="overview-card">
+                            <span class="card-value">0</span>
+                            <span class="card-label">运行中</span>
+                        </div>
+                        <div class="overview-card">
+                            <span class="card-value">0</span>
+                            <span class="card-label">失败</span>
+                        </div>
+                    </div>
+
+                    <div class="system-panels">
+                        <div class="system-panel">
+                            <h3>系统状态</h3>
+                            <div id="healthStatus"></div>
+                        </div>
+                        <div class="system-panel">
+                            <h3>系统配置</h3>
+                            <div id="systemConfig"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 数据源管理 -->
+            <section id="datasource" class="content-section">
+<!--                <div class="section-header">-->
+<!--                    <h2>数据源管理</h2>-->
+<!--                    <div class="header-actions">-->
+<!--                        <input type="text" id="searchDatasource" placeholder="搜索数据源..." class="search-input">-->
+<!--                        <button class="btn btn-primary" onclick="refreshDatasource()">-->
+<!--                            刷新-->
+<!--                        </button>-->
+<!--                    </div>-->
+<!--                </div>-->
+                <div class="datasource-container">
+                    <div class="file-browser">
+                        <div class="breadcrumb" id="datasourceBreadcrumb">
+                            <span class="breadcrumb-item active">根目录</span>
+                        </div>
+                        <div class="file-list" id="datasourceList">
+                            <div class="loading">加载中...</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 地图切片 -->
+            <section id="map-tiles" class="content-section">
+                <div class="section-header">
+                    <h2>地图切片</h2>
+                </div>
+                <div class="map-tiles-container">
+                    <form id="mapTileForm" class="form-container">
+                        <div class="form-scroll-area">
+                            <!-- 基本设置 -->
+                            <div class="form-section">
+                                <h3>基本设置</h3>
+                                <div class="form-group">
+                                    <label>数据源文件夹路径</label>
+                                    <div class="file-input-group">
+                                        <input type="text" id="mapFolderPaths" placeholder="输入或选择数据源文件夹（支持多选，用逗号分隔）">
+                                        <button type="button" class="btn btn-secondary" onclick="selectDatasourceFolder('mapFolderPaths')">
+                                            浏览
+                                        </button>
+                                    </div>
+                                    <small class="form-hint">可手动输入或浏览选择多个文件夹，用逗号分隔</small>
+                                </div>
+                                <div class="form-group">
+                                    <label>文件模式</label>
+                                    <div class="file-input-group">
+                                        <input type="text" id="mapFilePatterns" value="" placeholder="输入或选择具体文件（支持多选，用逗号分隔）">
+                                        <button type="button" class="btn btn-secondary" onclick="selectDatasourceFolder('mapFilePatterns')">
+                                            浏览
+                                        </button>
+                                        <button type="button" class="btn btn-secondary" id="mapRecommendBtn" onclick="getRecommendation('map')">
+                                            智能推荐
+                                        </button>
+                                    </div>
+                                    <small class="form-hint">可手动输入文件名或浏览选择具体的.tif、.tiff或.txt文件，支持多个文件</small>
+                                </div>
+                                <div class="form-group">
+                                    <label>输出路径</label>
+                                    <div class="file-input-group">
+                                        <input type="text" id="mapOutputPath" placeholder="输入或选择输出路径（如：map/test/v1）" required>
+                                        <button type="button" class="btn btn-secondary" onclick="selectFolder('mapOutputPath')">
+                                            浏览
+                                        </button>
+                                    </div>
+                                    <small class="form-hint">可手动输入路径或浏览选择工作空间文件夹作为输出路径</small>
+                                </div>
+                            </div>
+
+                            <!-- 层级设置 -->
+                            <div class="form-section">
+                                <h3>层级设置</h3>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label>最小缩放级别</label>
+                                        <input type="number" id="mapMinZoom" value="0" min="0" max="20">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>最大缩放级别</label>
+                                        <input type="number" id="mapMaxZoom" value="12" min="0" max="20">
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label>瓦片大小</label>
+                                        <select id="mapTileSize">
+                                            <option value="256" selected>256x256</option>
+                                            <option value="512">512x512</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>重采样方法</label>
+                                        <select id="mapResampling">
+                                            <option value="near" selected>最近邻</option>
+                                            <option value="bilinear">双线性</option>
+                                            <option value="cubic">三次卷积</option>
+                                            <option value="average">平均值</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 性能设置 -->
+                            <div class="form-section">
+                                <h3>性能设置</h3>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label>进程数</label>
+                                        <input type="number" id="mapProcesses" value="4" min="1" max="16">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>最大内存限制</label>
+                                        <select id="mapMaxMemory">
+                                            <option value="4g">4GB</option>
+                                            <option value="8g" selected>8GB</option>
+                                            <option value="16g">16GB</option>
+                                            <option value="32g">32GB</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 高级设置 -->
+                            <div class="form-section">
+                                <h3>高级设置</h3>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label class="checkbox-label">
+                                            <input type="checkbox" id="mapGenerateShpIndex" checked>
+                                            生成SHP矢量索引
+                                        </label>
+                                        <small class="form-hint">生成分幅矢量栅格索引文件</small>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="checkbox-label">
+                                            <input type="checkbox" id="mapEnableIncrementalUpdate">
+                                            启用增量更新
+                                        </label>
+                                        <small class="form-hint">只处理新增或修改的文件</small>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label class="checkbox-label">
+                                            <input type="checkbox" id="mapSkipNodataTiles">
+                                            跳过透明瓦片
+                                        </label>
+                                        <small class="form-hint">自动删除完全透明的瓦片文件</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-actions-fixed">
+                            <button type="submit" class="btn btn-primary">
+                                开始切片
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </section>
+
+            <!-- 地形切片 -->
+            <section id="terrain-tiles" class="content-section">
+                <div class="section-header">
+                    <h2>地形切片</h2>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <h3>创建地形瓦片</h3>
+                    </div>
+                    <div class="card-body">
+                        <form id="terrainTileForm" class="form-grid">
+                            <!-- 文件选择 -->
+                            <div class="form-section">
+                                <h3>数据源选择</h3>
+                                <div class="form-group">
+                                    <label>文件夹路径</label>
+                                    <div class="file-input-group">
+                                        <input type="text" id="terrainFolderPaths" placeholder="输入或选择数据源文件夹（支持多选，用逗号分隔）" value="">
+                                        <button type="button" class="btn btn-secondary" onclick="selectDatasourceFolder('terrainFolderPaths')">
+                                            浏览
+                                        </button>
+                                    </div>
+                                    <small class="form-hint">可手动输入或浏览选择多个文件夹，用逗号分隔</small>
+                                </div>
+                                <div class="form-group">
+                                    <label>文件匹配模式</label>
+                                    <div class="file-input-group">
+                                        <input type="text" id="terrainFilePatterns" placeholder="输入或选择具体文件（支持多选，用逗号分隔）" value="">
+                                        <button type="button" class="btn btn-secondary" onclick="selectDatasourceFolder('terrainFilePatterns')">
+                                            浏览
+                                        </button>
+                                        <button type="button" class="btn btn-secondary" id="terrainRecommendBtn" onclick="getRecommendation('terrain')">
+                                            智能推荐
+                                        </button>
+                                    </div>
+                                    <small class="form-hint">可手动输入文件名或浏览选择具体的.tif、.tiff或.txt文件，支持多个文件</small>
+                                </div>
+                                <div class="form-group">
+                                    <label>输出路径</label>
+                                    <div class="file-input-group">
+                                        <input type="text" id="terrainOutputPath" placeholder="输入或选择输出路径（如：terrain/taiwan/v1）" required>
+                                        <button type="button" class="btn btn-secondary" onclick="selectFolder('terrainOutputPath')">
+                                            浏览
+                                        </button>
+                                    </div>
+                                    <small class="form-hint">可手动输入路径或浏览选择工作空间文件夹作为输出路径</small>
+                                </div>
+                            </div>
+                            <!-- 基本参数 -->
+                            <div class="form-section">
+                                <h3>基本参数</h3>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label>起始缩放级别</label>
+                                        <input type="number" id="terrainStartZoom" value="0" min="0" max="20">
+                                        <small class="form-hint">粗糙级别，通常为0</small>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>结束缩放级别</label>
+                                        <input type="number" id="terrainEndZoom" value="8" min="0" max="20">
+                                        <small class="form-hint">详细级别，最小值8</small>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label>最大三角形数</label>
+                                        <select id="terrainMaxTriangles">
+                                            <option value="16384">16384（低质量）</option>
+                                            <option value="65536">65536（中质量）</option>
+                                            <option value="32768">32768（推荐）</option>
+                                            <option value="98304">98304（高质量）</option>
+                                        </select>
+                                        <small class="form-hint">更大的值可提高质量但增加处理时间</small>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>地理边界</label>
+                                        <input type="text" id="terrainBounds" placeholder="west,south,east,north">
+                                        <small class="form-hint">可选，格式：-180,-90,180,90</small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 性能参数 -->
+                            <div class="form-section">
+                                <h3>性能参数</h3>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label>线程数</label>
+                                        <input type="number" id="terrainThreads" value="4" min="1" max="16">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>最大内存限制</label>
+                                        <select id="terrainMaxMemory">
+                                            <option value="4g">4GB</option>
+                                            <option value="8g" selected>8GB</option>
+                                            <option value="16g">16GB</option>
+                                            <option value="32g">32GB</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 高级设置 -->
+                            <div class="form-section">
+                                <h3>高级设置</h3>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label class="checkbox-label">
+                                            <input type="checkbox" id="terrainCompression" checked>
+                                            启用压缩
+                                        </label>
+                                        <small class="form-hint">减少文件大小</small>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="checkbox-label">
+                                            <input type="checkbox" id="terrainDecompress" checked>
+                                            自动解压输出
+                                        </label>
+                                        <small class="form-hint">解压生成的terrain文件</small>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label class="checkbox-label">
+                                            <input type="checkbox" id="terrainAutoZoom">
+                                            启用智能分级
+                                        </label>
+                                        <small class="form-hint">根据数据自动调整缩放级别</small>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>智能分级策略</label>
+                                        <select id="terrainZoomStrategy">
+                                            <option value="conservative" selected>保守策略</option>
+                                            <option value="aggressive">激进策略</option>
+                                        </select>
+                                        <small class="form-hint">仅在启用智能分级时生效</small>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label class="checkbox-label">
+                                            <input type="checkbox" id="terrainMerge">
+                                            合并地形瓦片
+                                        </label>
+                                        <small class="form-hint">将多个地形文件合并处理</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-actions">
+                                <button type="submit" class="btn btn-primary">
+                                    开始切片
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 工作空间管理 -->
+            <section id="workspace" class="content-section">
+                <div class="card">
+                    <div class="card-header">
+                        <div style="display: flex; align-items: center; justify-content: space-between;">
+                            <div class="breadcrumb" id="workspaceBreadcrumb">
+                                <span class="breadcrumb-item active">根目录</span>
+                            </div>
+                            <button class="btn btn-primary" onclick="createFolder()" style="margin-left: 20px;">
+                                <i class="fas fa-folder-plus"></i> 新建文件夹
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div id="workspaceList">
+                            <!-- 文件列表将通过 JavaScript 动态加载 -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 任务管理 -->
+            <section id="tasks" class="content-section">
+                <div class="section-header">
+                    <h2>任务管理</h2>
+                </div>
+                <div class="card">
+                    <div class="card-body">
+                        <div class="task-list" id="taskList">
+                            <div class="loading">加载中...</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 分析工具 -->
+            <section id="tools" class="content-section">
+                <div class="card">
+                    <div class="card-header">
+                        <h2>分析工具</h2>
+                    </div>
+                    <div class="card-body tools-grid">
+                        <!-- 透明瓦片扫描/删除 合并 -->
+                        <div class="tool-block">
+                            <h3>透明瓦片处理</h3>
+                            <div class="form-group">
+                                <label>选择工作空间文件夹</label>
+                                <div class="file-input-group">
+                                    <input type="text" id="nodataFolder" placeholder="请选择文件夹" readonly>
+                                    <button type="button" class="btn btn-secondary" onclick="selectWorkspaceFolder('nodataFolder')">浏览</button>
+                                </div>
+                            </div>
+                            <div style="display: flex; gap: 12px;">
+                                <button class="btn btn-primary" onclick="scanNodataTiles()">扫描透明瓦片</button>
+                                <button class="btn btn-danger" onclick="deleteNodataTiles()">删除透明瓦片</button>
+                            </div>
+                        </div>
+                        <!-- layer.json 生成 -->
+                        <div class="tool-block">
+                            <h3>layer.json 生成</h3>
+                            <div class="form-group">
+                                <label>选择工作空间文件夹</label>
+                                <div class="file-input-group">
+                                    <input type="text" id="layerJsonFolder" placeholder="请选择文件夹" readonly>
+                                    <button type="button" class="btn btn-secondary" onclick="selectWorkspaceFolder('layerJsonFolder')">浏览</button>
+                                </div>
+                            </div>
+                            <button class="btn btn-primary" onclick="generateLayerJson()">确定</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 系统管理 -->
+            <section id="system" class="content-section">
+                <div class="section-header">
+                    <h2>系统管理</h2>
+                </div>
+                <div class="system-grid">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>系统更新</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="update-info" id="updateInfo">
+                                <div class="loading">检查更新中...</div>
+                            </div>
+                            <div class="form-actions">
+                                <button class="btn btn-primary" onclick="checkForUpdates()">
+                                    检查更新
+                                </button>
+                                <button class="btn btn-secondary" onclick="updateContainer()">
+                                    更新容器
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>API路由信息</h3>
+                        </div>
+                        <div class="card-body">
+                            <div id="routesInfo">
+                                <div class="loading">加载中...</div>
+                            </div>
+                            <div class="form-actions">
+                                <button class="btn btn-secondary" onclick="loadRoutes()">
+                                    查看路由
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>系统配置</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="config-info">
+                                <div class="config-item">
+                                    <span class="config-label">服务端口</span>
+                                    <span class="config-value">8083</span>
+                                </div>
+                                <div class="config-item">
+                                    <span class="config-label">数据目录</span>
+                                    <span class="config-value" id="dataDirectory">加载中...</span>
+                                </div>
+                                <div class="config-item">
+                                    <span class="config-label">后端服务</span>
+                                    <span class="config-value">localhost:8000</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- 模态框 -->
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">标题</h3>
+<!--                <button class="modal-close" onclick="closeModal()">&times;</button>-->
+            </div>
+            <div class="modal-body" id="modalBody">
+                内容
+            </div>
+            <div class="modal-footer" id="modalFooter">
+                <button class="btn btn-secondary" onclick="closeModal()">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="js/api.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html> 

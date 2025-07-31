@@ -1,0 +1,86 @@
+# 多阶段构建Dockerfile，支持ARM64和x86_64架构
+# 基于Debian Buster构建，包含GDAL 2.4.0和CTB工具
+
+FROM debian:bullseye
+
+LABEL maintainer="TerraForge Team"
+LABEL description="Geographic tiling tools with GDAL and Cesium Terrain Builder"
+
+# 安装依赖和GDAL
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    cmake \
+    curl \
+    git \
+    gdal-bin \
+    libgdal-dev \
+    python3-gdal \
+    python3-pil \
+    python3-pip \
+    python3-dev \
+    python3-setuptools \
+    wget \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# 升级pip并安装Python依赖包
+RUN pip3 install --upgrade pip setuptools wheel
+RUN pip3 install --no-cache-dir \
+    flask==2.2.5 \
+    flask-cors==4.0.0 \
+    psutil==5.9.0 \
+    requests==2.28.0 \
+    pillow \
+    lxml
+
+# 创建工作目录
+WORKDIR /ctbtemp
+
+# 复制本地CTB源码
+COPY cesium-terrain-builder/ ./cesium-terrain-builder/
+
+# 构建CTB
+RUN mkdir -p cesium-terrain-builder/build \
+    && cd cesium-terrain-builder/build \
+    && cmake .. \
+    && make -j$(nproc) \
+    && make install \
+    && ldconfig
+
+# 确保共享库正确配置
+RUN echo "/usr/local/lib" > /etc/ld.so.conf.d/local.conf \
+    && ldconfig
+
+# 确保gdal2tiles.py可用
+RUN wget -O /usr/bin/gdal2tiles.py https://raw.githubusercontent.com/OSGeo/gdal/v2.4.0/gdal/swig/python/scripts/gdal2tiles.py \
+    && chmod +x /usr/bin/gdal2tiles.py
+
+# 创建应用目录
+RUN mkdir -p /app/dataSource /app/tiles /app/logs \
+    && chmod -R 777 /app
+
+# 设置工作目录
+WORKDIR /app
+
+# 复制模块化瓦片服务文件
+COPY docker/app.py /app/app.py
+COPY docker/service.py /app/service.py
+COPY docker/config.py /app/config.py
+COPY docker/utils.py /app/utils.py
+RUN chmod +x /app/app.py
+
+# 设置环境变量
+ENV LD_LIBRARY_PATH=/usr/local/lib
+
+# 创建入口点脚本
+RUN echo '#!/bin/bash\n\n# 更新共享库缓存\nldconfig\n\n# 设置环境变量\nexport LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH\n\n# 执行传入的命令或默认命令\nif [ $# -eq 0 ]; then\n    echo "TerraForge - 地理瓦片工具"\n    echo "可用工具:"\n    echo "- ctb-tile: 地形切片工具"\n    echo "- ctb-export: 地形导出工具"\n    echo "- ctb-info: 地形信息工具"\n    echo "- gdal2tiles.py: GDAL地图切片工具"\n    echo "- python3 app.py: HTTP API服务"\nelse\n    exec "$@"\nfi' > /entrypoint.sh \
+    && chmod +x /entrypoint.sh
+
+# 测试CTB工具是否可用
+RUN ldconfig && ldd $(which ctb-tile) && ctb-tile --version || echo "CTB工具测试失败"
+
+# 暴露HTTP服务端口
+EXPOSE 8000
+
+# 入口点
+ENTRYPOINT ["/entrypoint.sh"] 
