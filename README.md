@@ -129,10 +129,11 @@ java -jar target/terraforge-server-2.8.0.jar
 - **数据源浏览**: [http://localhost:8000/datasources](http://localhost:8000/datasources)
 
 #### Java引擎服务（端口8080）
-- **Java API服务**: [http://localhost:8080](http://localhost:8083)
-- **Swagger文档**: [http://localhost:8080/doc.html](http://localhost:8083/doc.html)
-- **健康检查**: [http://localhost:8080/health](http://localhost:8083/health)
-- **API接口**: [http://localhost:8080/terrain/cut](http://localhost:8083/terrain/cut)
+- **Java API服务**: [http://localhost:8083](http://localhost:8083)
+- **Swagger文档**: [http://localhost:8083/doc.html](http://localhost:8083/doc.html)
+- **健康检查**: [http://localhost:8083/health](http://localhost:8083/health)
+- **API接口**: [http://localhost:8083/terrain/cut](http://localhost:8083/terrain/cut)
+- **管理页面地址**: [http://localhost:8083](http://localhost:8083)
 - <img width="2880" height="1474" alt="image" src="https://github.com/user-attachments/assets/4fa5eeaf-ab2c-4491-af87-a0a6d549e972" />
 
 ---
